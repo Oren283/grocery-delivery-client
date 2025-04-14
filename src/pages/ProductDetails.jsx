@@ -6,25 +6,27 @@ import { assets } from "../assets/assets";
 import ProductCard from "../components/ProductCard";
 
 const ProductDetails = () => {
-
-    const {products,navigate, currency,addToCart} = useAppContext();
+    const {products, navigate, currency, addToCart} = useAppContext();
     const {id} = useParams();
     const [relatedProducts, setRelatedProducts] = useState([]);
-    
     const [thumbnail, setThumbnail] = useState(null);
+    const [isLoading, setIsLoading] = useState(true);
 
     const product = products.find((item) => item._id === id);
-    useEffect(()=> {
-        if(products.length >0){
-            let productsCopy = products.slice();
-            productsCopy = productsCopy.filter((item) => product.category ===item.category);
-            setRelatedProducts(productsCopy.slice(0,5));
-        }
-    },[products]);
 
     useEffect(() => {
-        setThumbnail(product?.image[0] ? product.image[0] : null)
-    },[product])
+        if (products.length > 0 && product) {
+            const related = products.filter(
+                (item) => item.category === product.category && item._id !== product._id && item.inStock
+            ).slice(0, 5);
+            setRelatedProducts(related);
+            setIsLoading(false);
+        }
+    }, [products, product]);
+
+    useEffect(() => {
+        setThumbnail(product?.image[0] ? product.image[0] : null);
+    }, [product]);
 
     return product && (
         <div className="mt-12">
@@ -55,7 +57,7 @@ const ProductDetails = () => {
 
                     <div className="flex items-center gap-0.5 mt-1">
                         {Array(5).fill('').map((_, i) => (
-                           <img className="md:w-4 w-3.5" src={i <4 ?assets.star : assets.star_dull}/>
+                           <img key={i} className="md:w-4 w-3.5" src={i <4 ?assets.star : assets.star_dull}/>
                         ))}
                         <p className="text-base ml-2">(4)</p>
                     </div>
@@ -89,8 +91,11 @@ const ProductDetails = () => {
                     <div className="w-32 h-1 bg-primary rounded-full mt-2"></div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-8 w-full">
-                    {relatedProducts.filter((product) => product.inStock).map((product, index) => (
-                        <ProductCard key={index} product={product} />
+                    {!isLoading && relatedProducts.map((item) => (
+                        <ProductCard 
+                            key={item._id} 
+                            product={item} 
+                        />
                     ))}
                 </div>
                 <button onClick={()=> {navigate('/products'); scrollTo(0,0)}} className="mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary hover:bg-primary/10 transition">  Xem thêm </button>
@@ -99,4 +104,4 @@ const ProductDetails = () => {
     );
 };
 
-export default ProductDetails
+export default ProductDetails;

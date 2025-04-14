@@ -1,31 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../../context/AppContext'
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 const SellerLogin = () => {
-    const {isSeller, setIsSeller, navigate} = useAppContext();
+    const {isSeller, setIsSeller, navigate,axios} = useAppContext();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
 
     const onSubmitHandler = async (event) => {
         event.preventDefault();
         try {
-            const response = await fetch('http://localhost:4000/api/seller/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ email, password }),
-                credentials: 'include'
-            });
-            const data = await response.json();
-            if (data.success) {
+            event.preventDefault();
+            const {data} = await axios.post('/api/seller/login',{email,password})
+            if (data.success){
                 setIsSeller(true);
-            } else {
-                alert(data.message);
+                localStorage.setItem("seller", JSON.stringify(data.seller))
+                navigate("/seller")
+            }else{
+                toast.error(data.message)
             }
         } catch (error) {
-            console.error('Login error:', error);
-            alert('Login failed. Please try again.');
+           toast.error(error.message)
         }
     };
 

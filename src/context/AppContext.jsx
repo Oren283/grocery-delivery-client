@@ -1,8 +1,12 @@
 import { createContext, useContext, useEffect, } from "react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { dummyProducts } from "../assets/assets";
+
 import  toast  from "react-hot-toast";
+import axios from "axios";
+
+axios.defaults.withCredentials = true;
+axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
 export const AppContext = createContext();
 
@@ -21,7 +25,31 @@ export const AppContextProvider = ({ children }) => {
     const [searchQuery, setSearchQuery] = useState({});
 
     const ferchProducts = async () => {
-        setProducts(dummyProducts)
+        try {
+            const { data } = await axios.get('/api/product/list',);
+            if(data.success){
+               setProducts(data.products); 
+            }else{
+                toast.error(data.message);
+            }
+        } catch (error) {
+           toast.error(error.message);
+        }
+    };
+
+    //Fetch Seller Status
+    const fetchSeller = async () => {
+        try {
+            const { data } = await axios.get('/api/seller/is-auth');
+            if (data.success) {
+                setIsSeller(true);
+            } else {
+                setIsSeller(false);
+            }
+        } catch (error) {
+            console.error('Error fetching seller status:', error);
+            setIsSeller(false);
+        }
     };
 
     const addToCart = (itemId) => {
@@ -76,13 +104,15 @@ export const AppContextProvider = ({ children }) => {
 
 
     useEffect(() => {
+       
+        fetchSeller();
         ferchProducts();
     }, []);
 
 
     const value = {navigate, user, setUser, isSeller, setIsSeller,
         showUserLogin, setShowUserLogin, products, currency, addToCart,updateCartItem,removeFromCart,cartItems,searchQuery, setSearchQuery
-        , getCartCount,getCartAmount,
+        , getCartCount,getCartAmount,axios, ferchProducts,
     }
 
     return <AppContext.Provider value={value}>
