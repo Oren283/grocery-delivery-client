@@ -12,12 +12,13 @@ const ProductDetails = () => {
     const [thumbnail, setThumbnail] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    const product = products.find((item) => item._id === id);
+    // Kiểm tra products có tồn tại và có dữ liệu
+    const product = products && products.length > 0 ? products.find((item) => item._id === id) : null;
 
     useEffect(() => {
-        if (products.length > 0 && product) {
+        if (products && products.length > 0 && product) {
             const related = products.filter(
-                (item) => item.category === product.category && item._id !== product._id && item.inStock
+                (item) => item.category === product.category && item._id !== product._id
             ).slice(0, 5);
             setRelatedProducts(related);
             setIsLoading(false);
@@ -28,7 +29,23 @@ const ProductDetails = () => {
         setThumbnail(product?.image[0] ? product.image[0] : null);
     }, [product]);
 
-    return product && (
+    if (isLoading) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p className="text-xl">Đang tải...</p>
+            </div>
+        );
+    }
+
+    if (!product) {
+        return (
+            <div className="flex items-center justify-center h-screen">
+                <p className="text-xl">Không tìm thấy sản phẩm</p>
+            </div>
+        );
+    }
+
+    return (
         <div className="mt-12">
             <p>
                 <Link to={"/"}>Home</Link> /
@@ -91,12 +108,18 @@ const ProductDetails = () => {
                     <div className="w-32 h-1 bg-primary rounded-full mt-2"></div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 mt-8 w-full">
-                    {!isLoading && relatedProducts.map((item) => (
-                        <ProductCard 
-                            key={item._id} 
-                            product={item} 
-                        />
-                    ))}
+                    {relatedProducts && relatedProducts.length > 0 ? (
+                        relatedProducts.map((item) => (
+                            <ProductCard 
+                                key={item._id} 
+                                product={item} 
+                            />
+                        ))
+                    ) : (
+                        <div className="col-span-full text-center py-8">
+                            <p className="text-gray-500">Không có sản phẩm liên quan</p>
+                        </div>
+                    )}
                 </div>
                 <button onClick={()=> {navigate('/products'); scrollTo(0,0)}} className="mx-auto cursor-pointer px-12 my-16 py-2.5 border rounded text-primary hover:bg-primary/10 transition">  Xem thêm </button>
             </div>
