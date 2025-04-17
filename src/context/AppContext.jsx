@@ -15,7 +15,7 @@ export const AppContextProvider = ({ children }) => {
     const currency = import.meta.env.VITE_CURRENCY;
 
     const navigate = useNavigate();
-    const [user, setUser] = useState(true);
+    const [user, setUser] = useState(null);
     const [isSeller, setIsSeller] = useState(false);
     const [showUserLogin,setShowUserLogin] = useState(false);
     const [products, setProducts] = useState([]);
@@ -24,7 +24,7 @@ export const AppContextProvider = ({ children }) => {
 
     const [searchQuery, setSearchQuery] = useState({});
 
-    const ferchProducts = async () => {
+    const fetchProducts = async () => {
         try {
             const { data } = await axios.get('/api/product/list',);
             if(data.success){
@@ -33,9 +33,31 @@ export const AppContextProvider = ({ children }) => {
                 toast.error(data.message);
             }
         } catch (error) {
-           toast.error(error.message);
+           toast.error(error.response?.data?.message || error.message);
         }
     };
+
+    //Fetch User Auth Status,User Data and Cart Items
+
+        const fetchUser = async () => {
+           try {
+            const { data } = await axios.get('/api/user/is-auth');
+            if (data.success) {
+               setUser(data.user);
+               setCartItems(data.user.cartItems || {});
+            } else {
+               setUser(null);
+               setCartItems({});
+               toast.error(data.message);
+            }
+           } catch (error) {
+            setUser(null);
+            setCartItems({});
+            console.error('Authentication error:', error);
+           }
+        }
+
+
 
     //Fetch Seller Status
     const fetchSeller = async () => {
@@ -104,15 +126,37 @@ export const AppContextProvider = ({ children }) => {
 
 
     useEffect(() => {
-       
+        fetchUser();
         fetchSeller();
-        ferchProducts();
+        fetchProducts();
     }, []);
+
+    //Update Cart Items in DB
+    useEffect(() => {
+        const updateCart = async () => {
+            if (!user || Object.keys(cartItems).length === 0) return;
+            
+            try {
+                const {data} = await axios.post('/api/cart/update', {cartItems})
+                if (!data.success) {
+                    toast.error(data.message)
+                    // Nếu cập nhật thất bại, đồng bộ lại cartItems từ server
+                    await fetchUser();
+                }
+            } catch (error) {
+                console.error('Lỗi cập nhật giỏ hàng:', error);
+                toast.error('Không thể cập nhật giỏ hàng. Vui lòng thử lại.');
+                // Đồng bộ lại cartItems từ server khi có lỗi
+                await fetchUser();
+            }
+        }
+        updateCart();
+    }, [cartItems])
 
 
     const value = {navigate, user, setUser, isSeller, setIsSeller,
         showUserLogin, setShowUserLogin, products, currency, addToCart,updateCartItem,removeFromCart,cartItems,searchQuery, setSearchQuery
-        , getCartCount,getCartAmount,axios, ferchProducts,
+        , getCartCount,getCartAmount,axios, fetchProducts,
     }
 
     return <AppContext.Provider value={value}>

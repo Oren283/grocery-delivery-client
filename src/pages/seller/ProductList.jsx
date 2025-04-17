@@ -6,13 +6,13 @@ import toast from 'react-hot-toast'
 
 
 const ProductList = () => {
-  const {products, currency, axios, ferchProducts} = useAppContext();
+  const {products, currency, axios, fetchProducts} = useAppContext();
   const deleteProduct = async (id) => {
     try {
       const {data} = await axios.delete(`/api/seller/products/${id}`);
       if(data.success){
         toast.success(data.message);
-        ferchProducts();
+        fetchProducts();
       } else {
         toast.error(data.message);
       }

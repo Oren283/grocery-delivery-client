@@ -5,6 +5,8 @@ import { useAppContext } from "../context/AppContext"; // Import context của �
 import logo from '../assets/logo.svg' // Logo của website
 import profile from '../assets/profile_icon.png' // Icon avatar người dùng
 import { assets } from '../assets/assets';
+import axios from 'axios';
+import toast from 'react-hot-toast';
 
 // Khai báo component Navbar
 const Navbar = () => {
@@ -12,12 +14,27 @@ const Navbar = () => {
     const [open, setOpen] = React.useState(false)
     
     // Lấy các biến và hàm từ context: thông tin user, hàm setUser, setShowUserLogin, và điều hướng navigate
-    const { user, setUser, setShowUserLogin, navigate , setSearchQuery, searchQuery,getCartCount} = useAppContext();
+    const { user, setUser, setShowUserLogin, navigate , setSearchQuery, searchQuery,getCartCount,setCartItems} = useAppContext();
 
     // Hàm xử lý khi người dùng đăng xuất
     const logout = async ()=> {
-        setUser(null);     // Xóa thông tin user
-        navigate('/');     // Quay về trang chủ
+        try {
+            const {data} = await axios.get('/api/user/logout')
+            // Xóa thông tin user và giỏ hàng trước khi kiểm tra response
+            setUser(null);
+            setCartItems({});
+            if(data.success){
+                toast.success(data.message);
+                navigate('/');
+            } else {
+                toast.error(data.message);
+            }   
+        } catch (error) {
+            setUser(null);
+            setCartItems({});
+            toast.error(error.response?.data?.message || "Đã có lỗi xảy ra khi đăng xuất");
+            navigate('/');
+        }
     }
 
     useEffect(() => {
