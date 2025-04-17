@@ -1,15 +1,27 @@
 import React, { useEffect, useState } from 'react'
 import { useAppContext } from '../../context/AppContext'
-import { dummyOrders } from '../../assets/assets';
+import toast from 'react-hot-toast';
+
+
 
 const Orders = () => {
   const boxIcon = "https://raw.githubusercontent.com/prebuiltui/prebuiltui/main/assets/e-commerce/boxIcon.svg";
 
-  const {currency} =useAppContext();
+  const {currency,axios} =useAppContext();
   const[orders,setOrders] = useState([]);
 
   const fetchOrders = async () =>{
-    setOrders(dummyOrders)
+    try {
+        const {data} = await axios.get('/api/order/seller');
+        if(data.success){
+            console.log("Fetched Orders:", data.orders); // Add this line
+            setOrders(data.orders);
+        }else{
+            toast.error(data.message);
+        }
+    }catch (error) {
+        toast.error(error.message);
+    }
   };
 
   useEffect(() => {
@@ -45,7 +57,7 @@ const Orders = () => {
                 </p>
             </div>
 
-            <p className="font-medium text-base my-auto text-black/70">${order.amount}</p>
+            <p className="font-medium text-base my-auto text-black/70">{currency}{order.amount}</p>
 
             <div className="flex flex-col text-sm">
                 <p>Method: {order.paymentType}</p>

@@ -10,7 +10,7 @@ axios.defaults.baseURL = import.meta.env.VITE_BACKEND_URL;
 
 export const AppContext = createContext();
 
-export const AppContextProvider = ({ children }) => {
+export const AppProvider = ({ children }) => {
 
     const currency = import.meta.env.VITE_CURRENCY;
 
@@ -156,7 +156,7 @@ export const AppContextProvider = ({ children }) => {
 
     const value = {navigate, user, setUser, isSeller, setIsSeller,
         showUserLogin, setShowUserLogin, products, currency, addToCart,updateCartItem,removeFromCart,cartItems,searchQuery, setSearchQuery
-        , getCartCount,getCartAmount,axios, fetchProducts,
+        , getCartCount,getCartAmount,axios, fetchProducts,setCartItems,
     }
 
     return <AppContext.Provider value={value}>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react'
-import { useAppContext } from '../context/appContext'
+import { useAppContext } from '../context/AppContext'
 import add_address from '../assets/add_address.svg'
 import toast from 'react-hot-toast'
 const InputField = ({type, placeholder, name, handleChange,address} ) =>(

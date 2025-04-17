@@ -2,27 +2,38 @@
 import { useEffect, useState } from "react";
 
 import { useAppContext } from '../context/AppContext';
-import { dummyAddress } from "../assets/assets";
+
+
+import toast from "react-hot-toast";
 
 // Component Cart - trang giỏ hàng
 const Cart = () => {
     // Lấy dữ liệu từ context toàn cục
     const {
-        products, currency, cartItems, removeFromCart, getCartCount,
-        updateCartItem, navigate, getCartAmount
+        products, 
+        currency, 
+        cartItems, 
+        removeFromCart, 
+        getCartCount,
+        updateCartItem, 
+        navigate, 
+        getCartAmount,
+        axios,
+        user,
+        setCartItems
     } = useAppContext();
 
     // State để lưu danh sách sản phẩm trong giỏ
-    const [cartArray, setcartArray] = useState([]);
+    const [cartArray, setcartArray ] = useState([]);
 
     // Danh sách địa chỉ giao hàng
-    const [addresses, setAddresses] = useState([dummyAddress]);
+    const [addresses, setAddresses] = useState([]);
 
     // Hiển thị danh sách địa chỉ hay không
     const [showAddress, setShowAddress] = useState(false);
 
     // Địa chỉ đang được chọn
-    const [selectedAddress, setSelectedAddress] = useState(dummyAddress[0]);
+    const [selectedAddress, setSelectedAddress] = useState(null);
 
     // Lựa chọn phương thức thanh toán
     const [paymentOption, setPaymentOption] = useState("COD");
@@ -38,10 +49,50 @@ const Cart = () => {
         setcartArray(temArray); // Cập nhật mảng sản phẩm trong giỏ
     }
 
+    const getUserAddress = async () => {
+        try{
+            const {data} = await axios.get('/api/address/get');
+             setAddresses(data.addresses); // Cập nhật danh sách địa chỉ
+             if (data.addresses.length > 0) {
+                setSelectedAddress(data.addresses[0]); // Chọn địa chỉ đầu tiên nếu có
+        }else{
+            toast.error(data.message);
+        }
+    }catch (error) {
+        toast.error(error.message); // Hiển thị thông báo lỗi
+    }
+}
+
     // Hàm xử lý đặt hàng
     const placeOrder = async () => {
-        // Viết logic đặt hàng tại đây (gửi thông tin lên backend...)
+        try{
+            if (!selectedAddress){
+                return toast.error("Please select an address"); // Kiểm tra địa chỉ đã chọn
+            }
+            // Fix: Change "COC" to "COD" to match the payment option value
+            if(paymentOption ==="COD"){
+                const {data} = await axios.post('/api/order/cod',{
+                    userId: user._id,
+                    items: cartArray.map(item=> ({product:item._id, quantity:item.quantity})),
+                    address: selectedAddress._id
+
+                })
+                if(data.success){
+                    toast.success(data.message); // Hiển thị thông báo thành công
+                    setCartItems({}); // Xóa giỏ hàng sau khi đặt hàng thành công
+                    navigate('/my-orders'); // Chuyển hướng đến trang đơn hàng
+            }else{
+                toast.error(data.message); // Hiển thị thông báo lỗi
+            }
+        }
+        // Add logic for other payment methods if needed, e.g., "Online"
+        // else if (paymentOption === "Online") {
+        //     // Handle online payment logic
+        // }
+    }catch (error) {
+        toast.error(error.message); // Hiển thị thông báo lỗi
     }
+     }
 
     // useEffect sẽ chạy khi danh sách sản phẩm hoặc giỏ hàng thay đổi
     useEffect(() => {
@@ -49,6 +100,12 @@ const Cart = () => {
             getCart(); // Cập nhật giỏ hàng khi dữ liệu thay đổi
         }
     }, [products, cartItems]);
+
+    useEffect(() => {
+        if(user){
+            getUserAddress(); // Lấy địa chỉ người dùng từ backend
+        }
+    },[user])
 
     // Trả về giao diện của component nếu có dữ liệu
     return products.length > 0 && cartItems ? (
